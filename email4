@@ -1,0 +1,34 @@
+import win32com.client as client
+import os
+
+def send_email():
+    try:
+        # Ensure the correct path to Outlook is used
+        outlook_path = r"C:\Program Files\Microsoft Office\root\Office16\OUTLOOK.EXE"
+        if not os.path.exists(outlook_path):
+            raise FileNotFoundError("The specified Outlook path does not exist. Ensure the correct version of Outlook is installed.")
+
+        # Create an instance of the Outlook application
+        outlook = client.Dispatch("Outlook.Application")
+
+        # Create a new email item
+        mail = outlook.CreateItem(0)  # 0: olMailItem
+
+        # Set the email properties
+        mail.To = "chrismarinelli@live.com"
+        mail.Subject = "Hello"
+        mail.Body = "Hello World"
+
+        # Display the email (optional - comment this line to send directly)
+        mail.Display()
+
+        # Uncomment the next line to send the email directly
+        # mail.Send()
+
+        print("Email created successfully.")
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+# Call the function
+send_email()

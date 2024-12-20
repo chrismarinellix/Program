@@ -1,0 +1,11 @@
+from openpyxl import load_workbook
+
+EXCEL_FILE = "C:\\Users\\home\\OneDrive\\Desktop\\Program_Management.xlsx"
+
+try:
+    wb = load_workbook(EXCEL_FILE, read_only=True)
+    print("File loaded successfully.")
+except FileNotFoundError:
+    print(f"File not found: {EXCEL_FILE}")
+except Exception as e:
+    print(f"An error occurred: {e}")
