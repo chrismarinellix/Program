@@ -1,0 +1,310 @@
+import os
+import logging
+from docx import Document
+from docx.shared import Pt, Inches
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.oxml.ns import nsdecls
+from docx.oxml import parse_xml
+
+# Set up logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("variation_template_generator.log"),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger("variation_template_generator")
+
+def create_variation_template():
+    logger.info("Starting template creation")
+    
+    try:
+        # Create a new document
+        logger.debug("Creating document object")
+        doc = Document()
+        
+        # Set up document properties
+        logger.debug("Setting document properties")
+        section = doc.sections[0]
+        section.page_height = Inches(11)
+        section.page_width = Inches(8.5)
+        section.left_margin = Inches(1)
+        section.right_margin = Inches(1)
+        section.top_margin = Inches(1)
+        section.bottom_margin = Inches(1)
+        
+        # Add document header
+        logger.debug("Adding document header")
+        header = doc.add_heading('Vysus Australia Pty Ltd - Variation Agreement', 0)
+        header.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        
+        # Add document information section
+        logger.debug("Adding document information section")
+        doc.add_heading('Document Information', 1)
+        info_table = doc.add_table(rows=8, cols=2)
+        info_table.style = 'Table Grid'
+        
+        # Populate document information table
+        info_rows = [
+            ["Function:", "SD Grid Connection"],
+            ["Document type:", "Form"],
+            ["VMS ID:", "VMS-GRD-FRM-004"],
+            ["Current revision:", "1.0"],
+            ["Reason for revision:", ""],
+            ["Prepared by:", ""],
+            ["Reviewed by:", ""],
+            ["Authorized by:", ""]
+        ]
+        
+        for i, (key, value) in enumerate(info_rows):
+            info_table.cell(i, 0).text = key
+            info_table.cell(i, 1).text = value
+        
+        # Project details section
+        logger.debug("Adding project details section")
+        doc.add_heading('Project Details', 1)
+        project_table = doc.add_table(rows=7, cols=2)
+        project_table.style = 'Table Grid'
+        
+        # Populate project details table
+        project_rows = [
+            ["Client:", ""],
+            ["Project name:", ""],
+            ["Vysus Grid project number:", ""],
+            ["Original proposal number & title:", ""],
+            ["Variation proposal number & title:", ""],
+            ["Date of issue:", ""],
+            ["Technical Lead / Project Manager:", ""]
+        ]
+        
+        for i, (key, value) in enumerate(project_rows):
+            project_table.cell(i, 0).text = key
+            project_table.cell(i, 1).text = value
+        
+        # Variation Task Selection Section
+        logger.debug("Adding task selection section")
+        doc.add_heading('Variation Task Selection', 1)
+        doc.add_paragraph('Select the task(s) that require variation:')
+        
+        # List of tasks from the provided documents
+        tasks = [
+            "Technical & Regulatory Connection Support (T&E)",
+            "Project Management (T&E)",
+            "Ad-hoc Pre Connection Assistance (T&E)",
+            "Voltage Control Strategy Development (T&E)",
+            "Site-Specific Tuning (PSCAD and PSS/E) (T&E)",
+            "PSSE/PSCAD Benchmarking",
+            "Connection Package Updates",
+            "Issues Tracker Responses",
+            "FIA Support",
+            "Minimum SCR Identification Study",
+            "Other (specify in description)"
+        ]
+        
+        # Instructions for dropdown implementation
+        task_dropdown_para = doc.add_paragraph()
+        task_dropdown_para.add_run("PRIMARY TASK DROPDOWN: ").bold = True
+        task_dropdown_para.add_run("To implement this dropdown in Word:")
+        
+        task_instruct_list = [
+            "Go to the Developer tab",
+            "Click 'Combo Box Content Control'",
+            "Right-click the control and select 'Properties'",
+            "Add each of these values to the dropdown list:"
+        ]
+        
+        for instruct in task_instruct_list:
+            doc.add_paragraph(instruct, style='List Bullet')
+        
+        # Create task table with list of tasks
+        task_table = doc.add_table(rows=len(tasks)+1, cols=1)
+        task_table.style = 'Table Grid'
+        
+        # Add header row
+        task_table.cell(0, 0).text = "Task Options for Dropdown"
+        
+        # Add task options
+        for i, task in enumerate(tasks):
+            task_table.cell(i+1, 0).text = task
+        
+        # Add secondary task dropdown
+        doc.add_paragraph()
+        secondary_para = doc.add_paragraph()
+        secondary_para.add_run("SECONDARY TASK (if applicable): ").bold = True
+        secondary_para.add_run("Implement another dropdown with the same options")
+        
+        # Variation Type Section
+        logger.debug("Adding variation type section")
+        doc.add_heading('Variation Type', 1)
+        doc.add_paragraph('Select the type of variation:')
+        
+        variation_types = [
+            "Budget reallocation (zero-dollar variation)",
+            "Additional budget request",
+            "Timeline extension",
+            "Scope change"
+        ]
+        
+        # Instructions for checkbox implementation
+        checkbox_para = doc.add_paragraph()
+        checkbox_para.add_run("CHECKBOXES: ").bold = True
+        checkbox_para.add_run("To implement checkboxes in Word:")
+        
+        checkbox_instruct_list = [
+            "Go to the Developer tab",
+            "Click 'Check Box Content Control'",
+            "Insert before each option listed below"
+        ]
+        
+        for instruct in checkbox_instruct_list:
+            doc.add_paragraph(instruct, style='List Bullet')
+        
+        # List the variation types
+        for vtype in variation_types:
+            check_para = doc.add_paragraph()
+            check_para.add_run("☐ " + vtype)
+        
+        # Reason for Variation Section
+        logger.debug("Adding reason for variation section")
+        doc.add_heading('Reason for Variation', 1)
+        doc.add_paragraph('Check all applicable reasons:')
+        
+        variation_reasons = [
+            "Response to AEMO/ElectraNet requirements",
+            "Issues tracker resolution",
+            "Model complexity issues",
+            "Simulation updates required",
+            "Regulatory compliance requirements",
+            "Additional meetings and coordination",
+            "New committed generator RUGs added",
+            "Setting changes/retuning required",
+            "Timeline delays",
+            "Scope expansion",
+            "Budget constraints",
+            "Other (specify in description)"
+        ]
+        
+        # Create a 3-column layout for checkboxes
+        reason_table = doc.add_table(rows=4, cols=3)
+        reason_table.style = 'Table Grid'
+        
+        # Distribute reasons across the table
+        row = 0
+        col = 0
+        for reason in variation_reasons:
+            cell = reason_table.cell(row, col)
+            cell.text = f"☐ {reason}"
+            col += 1
+            if col > 2:
+                col = 0
+                row += 1
+        
+        # Standard text blocks section based on analyzed documents
+        logger.debug("Adding standard text blocks section")
+        doc.add_heading('Standard Text Blocks (Select to include in description)', 1)
+        doc.add_paragraph('The following standard text blocks are derived from existing variation documents:')
+        
+        text_blocks = [
+            "Due to greater than anticipated number of modelling complications, additional time is required for resolution prior to FIA entry.",
+            "Following entry into the FIA process, work has involved resolution of items in the project issues tracker.",
+            "The project timeline has been extended by [X] months beyond the original schedule (initially assumed [ORIGINAL_DATE], i.e. ~[X] additional months).",
+            "PSSE/PSCAD benchmarking investigations and retuning have resulted in updated settings requiring additional verification.",
+            "This zero-dollar variation is to address budget constraints in the [TASK_NAME] task by reallocating funds from other T&E categories.",
+            "The variation allows for the reallocation of unused funds from other T&E categories to ensure continued project support without requesting additional funds.",
+            "Additional regulatory documentation or compliance testing was required, exceeding the reallocated budget by $[AMOUNT].",
+            "PSS/E wide area studies were updated due to the addition of new committed generator RUGs.",
+            "Any remaining budgets will not be invoiced and if additional budget is required, Vysus will alert the client.",
+            "Continued support towards achieving 5.3.4a letter for the project.",
+            "Vysus has progressed in good faith to ensure the project is progressing without any delays.",
+            "Connection Package Update based on issues tracker items and applying the outcome of the setting changes."
+        ]
+        
+        for block in text_blocks:
+            block_para = doc.add_paragraph()
+            block_para.add_run("☐ " + block)
+        
+        # Description Section
+        logger.debug("Adding description section")
+        doc.add_heading('Description of Variation', 1)
+        doc.add_paragraph('Provide details of the variation including scope of work, budget details, and justification:')
+        
+        # Add placeholder for rich text entry
+        description_para = doc.add_paragraph()
+        description_para.add_run("[DESCRIPTION TEXT AREA - ENTER DETAILED DESCRIPTION HERE]")
+        
+        # Budget Details Section
+        logger.debug("Adding budget details section")
+        doc.add_heading('Budget Details', 1)
+        doc.add_paragraph('Complete the table below with current budgets and proposed changes:')
+        
+        budget_table = doc.add_table(rows=4, cols=4)
+        budget_table.style = 'Table Grid'
+        
+        # Set up header row
+        header_cells = budget_table.rows[0].cells
+        header_cells[0].text = "Task"
+        header_cells[1].text = "Current Budget"
+        header_cells[2].text = "Proposed Change"
+        header_cells[3].text = "New Budget"
+        
+        # Make remaining rows empty for filling in
+        for i in range(1, 4):
+            row_cells = budget_table.rows[i].cells
+            row_cells[0].text = f"[Task {i}]"
+            row_cells[1].text = "$0.00"
+            row_cells[2].text = "$0.00"
+            row_cells[3].text = "$0.00"
+        
+        # Add total row
+        total_para = doc.add_paragraph()
+        total_para.add_run("TOTAL VARIATION AMOUNT: $").bold = True
+        
+        # Approval Section
+        logger.debug("Adding approval section")
+        doc.add_heading('Approvals', 1)
+        approval_table = doc.add_table(rows=3, cols=3)
+        approval_table.style = 'Table Grid'
+        
+        # Set up header row
+        header_cells = approval_table.rows[0].cells
+        header_cells[0].text = "Role"
+        header_cells[1].text = "Name"
+        header_cells[2].text = "Signature & Date"
+        
+        # Set up role cells
+        role_cells_1 = approval_table.rows[1].cells
+        role_cells_1[0].text = "Technical Lead / Project Manager"
+        
+        role_cells_2 = approval_table.rows[2].cells
+        role_cells_2[0].text = "Client Approval"
+        
+        # Proceed with Variation section
+        proceed_para = doc.add_paragraph()
+        proceed_para.add_run("Proceed with Variation: ").bold = True
+        proceed_para.add_run("☐ Yes    ☐ No")
+        
+        # Create directory if it doesn't exist
+        output_dir = r"C:\Reporting\Variations"
+        logger.debug(f"Creating output directory: {output_dir}")
+        os.makedirs(output_dir, exist_ok=True)
+        
+        # Save the document
+        output_path = os.path.join(output_dir, "Variation_Agreement_Template.docx")
+        logger.debug(f"Saving document to: {output_path}")
+        doc.save(output_path)
+        
+        logger.info(f"Template created successfully at: {output_path}")
+        return output_path
+        
+    except Exception as e:
+        logger.error(f"Error creating template: {str(e)}", exc_info=True)
+        raise
+
+if __name__ == "__main__":
+    try:
+        template_path = create_variation_template()
+        print(f"Variation agreement template created successfully at: {template_path}")
+    except Exception as e:
+        print(f"Error creating template: {str(e)}")

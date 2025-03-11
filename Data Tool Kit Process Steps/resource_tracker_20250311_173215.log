@@ -1,0 +1,3 @@
+2025-03-11 17:32:15,053 - INFO - Script started - Resource Tracking Data Collection
+2025-03-11 17:32:15,053 - CRITICAL - Critical error in script execution: Project directory not found: C:\Users\YourUser\OneDrive - Vysus Group\Documents - Energy - Power Engineering\Project Management
+2025-03-11 17:32:15,053 - CRITICAL - Unhandled exception: Project directory not found: C:\Users\YourUser\OneDrive - Vysus Group\Documents - Energy - Power Engineering\Project Management

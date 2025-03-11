@@ -1,0 +1,223 @@
+import os
+import re
+import zipfile
+import xml.etree.ElementTree as ET
+from collections import Counter
+import csv
+
+# Function to extract text from docx without using python-docx
+def extract_text_from_docx(file_path):
+    """Extract text content from a Word document using built-in modules."""
+    try:
+        text = []
+        with zipfile.ZipFile(file_path) as docx:
+            # Word documents store their content in word/document.xml
+            content = docx.read('word/document.xml')
+            root = ET.fromstring(content)
+            
+            # Define XML namespace mapping
+            ns = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+            
+            # Extract paragraphs
+            for paragraph in root.findall('.//w:p', ns):
+                para_text = ''
+                for text_element in paragraph.findall('.//w:t', ns):
+                    if text_element.text:
+                        para_text += text_element.text
+                if para_text.strip():
+                    text.append(para_text)
+        
+        return '\n'.join(text)
+    except Exception as e:
+        print(f"Error processing {file_path}: {e}")
+        return ""
+
+def extract_form_fields(text):
+    """
+    Identify potential form fields from text.
+    This looks for patterns like questions, blanks, or labeled information.
+    """
+    potential_fields = []
+    
+    # Look for questions
+    questions = re.findall(r'[^.!?]*\?', text)
+    for q in questions:
+        if q.strip():
+            potential_fields.append((q.strip(), 'question'))
+    
+    # Look for labeled information (e.g., "Name: ____" or "Address:_____")
+    labeled_fields = re.findall(r'([A-Za-z\s]+)[:]([\s_]*)', text)
+    for f in labeled_fields:
+        if f[0].strip():
+            potential_fields.append((f[0].strip(), 'labeled_field'))
+    
+    # Look for checkbox-like items
+    checkbox_items = re.findall(r'[\(\[\{][^\)\]\}]?[\)\]\}]\s*([^\n\r.]+)', text)
+    for c in checkbox_items:
+        if c.strip():
+            potential_fields.append((c.strip(), 'checkbox'))
+    
+    return potential_fields
+
+def analyze_documents(folder_path):
+    """Analyze all Word documents in the specified folder."""
+    if not os.path.exists(folder_path):
+        print(f"Folder not found: {folder_path}")
+        return None
+    
+    documents = []
+    all_potential_fields = []
+    
+    # Process each document
+    for filename in os.listdir(folder_path):
+        if filename.endswith('.docx') and not filename.startswith('~$'):  # Skip temp files
+            file_path = os.path.join(folder_path, filename)
+            print(f"Processing {filename}...")
+            
+            # Extract text
+            text = extract_text_from_docx(file_path)
+            if text:
+                documents.append({
+                    'filename': filename,
+                    'text': text
+                })
+                
+                # Extract potential form fields
+                fields = extract_form_fields(text)
+                for field, field_type in fields:
+                    all_potential_fields.append({
+                        'filename': filename,
+                        'field': field,
+                        'type': field_type
+                    })
+    
+    if not documents:
+        print("No valid Word documents found in the specified folder.")
+        return None
+    
+    results = {
+        'documents': documents,
+        'potential_fields': all_potential_fields
+    }
+    
+    return results
+
+def find_common_patterns(results):
+    """Find common patterns and potential standardization opportunities."""
+    if not results or not results['documents']:
+        return None
+    
+    # Count field occurrences
+    field_counts = Counter()
+    field_types = Counter()
+    
+    for field_info in results['potential_fields']:
+        field_counts[field_info['field'].lower()] += 1
+        field_types[field_info['type']] += 1
+    
+    common_fields = field_counts.most_common(50)
+    
+    # Count word occurrences
+    all_words = Counter()
+    for doc in results['documents']:
+        # Simple word extraction by splitting on whitespace and removing punctuation
+        words = re.findall(r'\b[a-zA-Z]{3,}\b', doc['text'].lower())
+        all_words.update(words)
+    
+    # Remove common English words (simple stopword list)
+    stopwords = {'the', 'and', 'to', 'of', 'a', 'in', 'that', 'is', 'for', 'on', 'with', 'as', 'by', 'this', 'was', 'be'}
+    for word in stopwords:
+        if word in all_words:
+            del all_words[word]
+    
+    common_words = all_words.most_common(50)
+    
+    patterns = {
+        'common_fields': common_fields,
+        'field_types': dict(field_types),
+        'common_words': common_words
+    }
+    
+    return patterns
+
+def generate_recommendations(results, patterns):
+    """Generate recommendations for standardization."""
+    recommendations = {
+        'suggested_fields': [f[0] for f in patterns['common_fields'] if f[1] > 1][:20],
+        'suggested_form_structure': {
+            'main_fields': [f[0] for f in patterns['common_fields'] if f[1] > 1][:10],
+            'checkbox_fields': [f['field'] for f in results['potential_fields'] if f['type'] == 'checkbox'][:10]
+        }
+    }
+    
+    return recommendations
+
+def save_to_csv(data, file_path):
+    """Save data to CSV file."""
+    with open(file_path, 'w', newline='', encoding='utf-8') as f:
+        if not data:
+            return
+        
+        # Get headers from first row
+        headers = data[0].keys()
+        writer = csv.DictWriter(f, fieldnames=headers)
+        writer.writeheader()
+        writer.writerows(data)
+
+def main():
+    folder_path = r"C:\Reporting\Variations"
+    print(f"Analyzing Word documents in {folder_path}...")
+    
+    # Analyze documents
+    results = analyze_documents(folder_path)
+    if not results:
+        print("Analysis failed.")
+        return
+    
+    print(f"Processed {len(results['documents'])} documents.")
+    
+    # Find patterns
+    patterns = find_common_patterns(results)
+    if not patterns:
+        print("Pattern analysis failed.")
+        return
+    
+    # Generate recommendations
+    recommendations = generate_recommendations(results, patterns)
+    
+    # Create output folder
+    output_folder = os.path.join(os.path.dirname(folder_path), "Document_Analysis_Results")
+    os.makedirs(output_folder, exist_ok=True)
+    
+    # Save extracted fields to CSV
+    fields_csv_path = os.path.join(output_folder, "extracted_fields.csv")
+    save_to_csv(results['potential_fields'], fields_csv_path)
+    
+    # Save recommendations to text file
+    with open(os.path.join(output_folder, "standardization_recommendations.txt"), "w", encoding='utf-8') as f:
+        f.write("DOCUMENT ANALYSIS REPORT\n")
+        f.write(f"Analyzed {len(results['documents'])} documents\n\n")
+        
+        f.write("SUGGESTED FORM STRUCTURE:\n")
+        f.write("=======================\n\n")
+        
+        f.write("Recommended Fields:\n")
+        for field in recommendations['suggested_form_structure']['main_fields']:
+            f.write(f"- {field}\n")
+        
+        f.write("\nRecommended Checkbox Items:\n")
+        for checkbox in recommendations['suggested_form_structure']['checkbox_fields']:
+            f.write(f"- {checkbox}\n")
+        
+        f.write("\n\nCOMMON TERMINOLOGY:\n")
+        f.write("==================\n")
+        for term, count in patterns['common_words'][:20]:
+            f.write(f"{term}: {count} occurrences\n")
+    
+    print(f"Analysis complete. Results saved to {output_folder}")
+    print("Based on the analysis, here are the top fields for standardization:")
+    for field in recommendations['suggested_fields'][:10]:
+        print(f"- {field}")
+
+if __name__ == "__main__":
+    main()

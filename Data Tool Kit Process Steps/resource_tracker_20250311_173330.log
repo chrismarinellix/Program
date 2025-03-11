@@ -1,0 +1,57 @@
+2025-03-11 17:33:30,347 - INFO - Script started - Resource Tracking Data Collection
+2025-03-11 17:33:30,348 - INFO - Using project directory: C:\Users\chris.marinelli\OneDrive - Vysus Group\Documents - Energy - Power Engineering\Project Management
+2025-03-11 17:33:30,349 - INFO - Target file verified: C:\Users\chris.marinelli\OneDrive - Vysus Group\Documents - Energy - Power Engineering\Project Management\Project Management.xlsx
+2025-03-11 17:33:30,350 - INFO - Scanning directory for project files...
+2025-03-11 17:33:30,350 - INFO - Found 18 project files to process
+2025-03-11 17:33:30,352 - INFO - Processing file: Armidale Project GRD26.xlsm
+2025-03-11 17:33:30,496 - INFO - Found 'Schedule' sheet in Armidale Project GRD26.xlsm
+2025-03-11 17:33:30,507 - ERROR - Error reading data from Armidale Project GRD26.xlsm: Usecols do not match columns, columns expected but not found: ['L', 'K', 'J', 'B', 'H'] (sheet: Schedule)
+2025-03-11 17:33:30,508 - INFO - Processing file: Birdwood Proejct GRD61.xlsx
+2025-03-11 17:33:30,604 - INFO - Found 'Schedule' sheet in Birdwood Proejct GRD61.xlsx
+2025-03-11 17:33:30,613 - ERROR - Error reading data from Birdwood Proejct GRD61.xlsx: Usecols do not match columns, columns expected but not found: ['L', 'K', 'J', 'B', 'H'] (sheet: Schedule)
+2025-03-11 17:33:30,614 - INFO - Processing file: Birdwood Proejct GRDXX.xlsx
+2025-03-11 17:33:30,683 - INFO - Found 'Schedule' sheet in Birdwood Proejct GRDXX.xlsx
+2025-03-11 17:33:30,693 - ERROR - Error reading data from Birdwood Proejct GRDXX.xlsx: Usecols do not match columns, columns expected but not found: ['L', 'K', 'J', 'B', 'H'] (sheet: Schedule)
+2025-03-11 17:33:30,693 - INFO - Processing file: Blacktop Proejct GRD66.xlsx
+2025-03-11 17:33:30,762 - INFO - Found 'Schedule' sheet in Blacktop Proejct GRD66.xlsx
+2025-03-11 17:33:30,771 - ERROR - Error reading data from Blacktop Proejct GRD66.xlsx: Usecols do not match columns, columns expected but not found: ['L', 'K', 'J', 'B', 'H'] (sheet: Schedule)
+2025-03-11 17:33:30,771 - INFO - Processing file: Georgetown Proejct X90158.xlsx
+2025-03-11 17:33:30,842 - INFO - Found 'Schedule' sheet in Georgetown Proejct X90158.xlsx
+2025-03-11 17:33:30,852 - ERROR - Error reading data from Georgetown Proejct X90158.xlsx: Usecols do not match columns, columns expected but not found: ['L', 'K', 'J', 'B', 'H'] (sheet: Schedule)
+2025-03-11 17:33:30,852 - INFO - Processing file: Gerogery Proejct GRD90.xlsm
+2025-03-11 17:33:30,925 - INFO - Found 'Schedule' sheet in Gerogery Proejct GRD90.xlsm
+2025-03-11 17:33:30,934 - ERROR - Error reading data from Gerogery Proejct GRD90.xlsm: Usecols do not match columns, columns expected but not found: ['L', 'K', 'J', 'B', 'H'] (sheet: Schedule)
+2025-03-11 17:33:30,935 - INFO - Processing file: Haughton Proejct GRD87.xlsm
+2025-03-11 17:33:31,060 - INFO - Found 'Schedule' sheet in Haughton Proejct GRD87.xlsm
+2025-03-11 17:33:31,072 - ERROR - Error reading data from Haughton Proejct GRD87.xlsm: Usecols do not match columns, columns expected but not found: ['L', 'K', 'J', 'B', 'H'] (sheet: Schedule)
+2025-03-11 17:33:31,073 - INFO - Processing file: SandyCreek Project GRD79.xlsm
+2025-03-11 17:33:31,141 - INFO - Found 'Schedule' sheet in SandyCreek Project GRD79.xlsm
+2025-03-11 17:33:31,150 - ERROR - Error reading data from SandyCreek Project GRD79.xlsm: Usecols do not match columns, columns expected but not found: ['L', 'K', 'J', 'B', 'H'] (sheet: Schedule)
+2025-03-11 17:33:31,150 - INFO - Processing file: Tailem Bend Proejct GRD22.xlsx
+2025-03-11 17:33:31,215 - INFO - Found 'Schedule' sheet in Tailem Bend Proejct GRD22.xlsx
+2025-03-11 17:33:31,224 - ERROR - Error reading data from Tailem Bend Proejct GRD22.xlsx: Usecols do not match columns, columns expected but not found: ['L', 'K', 'J', 'B', 'H'] (sheet: Schedule)
+2025-03-11 17:33:31,225 - INFO - Processing file: Tamworth Proejct GRD23.xlsx
+2025-03-11 17:33:31,301 - INFO - Found 'Schedule' sheet in Tamworth Proejct GRD23.xlsx
+2025-03-11 17:33:31,309 - ERROR - Error reading data from Tamworth Proejct GRD23.xlsx: Usecols do not match columns, columns expected but not found: ['L', 'K', 'J', 'B', 'H'] (sheet: Schedule)
+2025-03-11 17:33:31,310 - INFO - Processing file: Templers Proejct GRD82.xlsx
+2025-03-11 17:33:31,385 - INFO - Found 'Schedule' sheet in Templers Proejct GRD82.xlsx
+2025-03-11 17:33:31,394 - ERROR - Error reading data from Templers Proejct GRD82.xlsx: Usecols do not match columns, columns expected but not found: ['L', 'K', 'J', 'B', 'H'] (sheet: Schedule)
+2025-03-11 17:33:31,394 - INFO - Processing file: Upper Colliope Project GRD78.xlsm
+2025-03-11 17:33:31,491 - INFO - Found 'Schedule' sheet in Upper Colliope Project GRD78.xlsm
+2025-03-11 17:33:31,500 - ERROR - Error reading data from Upper Colliope Project GRD78.xlsm: Usecols do not match columns, columns expected but not found: ['L', 'K', 'J', 'B', 'H'] (sheet: Schedule)
+2025-03-11 17:33:31,501 - INFO - Processing file: Wellington Proejct GRD80.xlsm
+2025-03-11 17:33:31,599 - INFO - Found 'Schedule' sheet in Wellington Proejct GRD80.xlsm
+2025-03-11 17:33:31,605 - ERROR - Error reading data from Wellington Proejct GRD80.xlsm: Usecols do not match columns, columns expected but not found: ['L', 'K', 'J', 'B', 'H'] (sheet: Schedule)
+2025-03-11 17:33:31,605 - INFO - Processing file: Whyalla Proejct GRD69.xlsx
+2025-03-11 17:33:31,680 - INFO - Found 'Schedule' sheet in Whyalla Proejct GRD69.xlsx
+2025-03-11 17:33:31,694 - ERROR - Error reading data from Whyalla Proejct GRD69.xlsx: Usecols do not match columns, columns expected but not found: ['L', 'K', 'J', 'B', 'H'] (sheet: Schedule)
+2025-03-11 17:33:31,695 - INFO - Processing file: Yanco Proejct GRD89.xlsm
+2025-03-11 17:33:31,846 - INFO - Found 'Schedule' sheet in Yanco Proejct GRD89.xlsm
+2025-03-11 17:33:31,852 - ERROR - Error reading data from Yanco Proejct GRD89.xlsm: Usecols do not match columns, columns expected but not found: ['L', 'K', 'J', 'B', 'H'] (sheet: Schedule)
+2025-03-11 17:33:31,852 - INFO - Processing file: ~$Georgetown Proejct X90158.xlsx
+2025-03-11 17:33:31,854 - ERROR - Error processing ~$Georgetown Proejct X90158.xlsx: [Errno 13] Permission denied: 'C:\\Users\\chris.marinelli\\OneDrive - Vysus Group\\Documents - Energy - Power Engineering\\Project Management\\~$Georgetown Proejct X90158.xlsx'
+2025-03-11 17:33:31,855 - INFO - Processing file: ~$Haughton Proejct GRD87.xlsm
+2025-03-11 17:33:31,856 - ERROR - Error processing ~$Haughton Proejct GRD87.xlsm: [Errno 13] Permission denied: 'C:\\Users\\chris.marinelli\\OneDrive - Vysus Group\\Documents - Energy - Power Engineering\\Project Management\\~$Haughton Proejct GRD87.xlsm'
+2025-03-11 17:33:31,856 - INFO - Processing file: ~$Upper Colliope Project GRD78.xlsm
+2025-03-11 17:33:31,857 - ERROR - Error processing ~$Upper Colliope Project GRD78.xlsm: [Errno 13] Permission denied: 'C:\\Users\\chris.marinelli\\OneDrive - Vysus Group\\Documents - Energy - Power Engineering\\Project Management\\~$Upper Colliope Project GRD78.xlsm'
+2025-03-11 17:33:31,858 - WARNING - No data was collected from any files. Nothing to merge.
