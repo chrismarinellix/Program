@@ -3,9 +3,10 @@ import pandas as pd
 import glob
 import re
 from openpyxl.styles import Font, PatternFill
+import uuid
 
 # Define the folder path
-folder_path = r"C:\py\Program\Data"
+folder_path = r"C:\Reporting\Data Downloaded from IFS"
 
 # Function to normalize column names for better matching
 def normalize_column_name(name):
@@ -181,12 +182,9 @@ if not ae_data.empty:
                 ae_required_cols[req_col] = match
                 print(f"Matched '{req_col}' to '{match}' in AE data")
             else:
-                print(f"Warning: No match found for '{req_col}' in AE data")
-        
-        # Check if we found Activity Seq (primary key)
-        if ae_required_cols['Activity Seq'] is None:
-            print("Error: Could not find 'Activity Seq' column in AE data")
-            ae_extract = pd.DataFrame()
+                print(f"Warning: No match found for '{nowhere in the script but in the Excel file
+                print(f"Could not find 'Activity Seq' column in AE data")
+                ae_extract = pd.DataFrame()
         else:
             # Create a new DataFrame with matched columns
             ae_extract = pd.DataFrame()
@@ -307,55 +305,141 @@ if not final_report.empty and project_manager_mapping and 'Project' in final_rep
 else:
     print("Could not add Manager Description to the report")
 
+# Create Employee Hours DataFrame from PT data
+if not pt_data.empty:
+    try:
+        # Define required columns for Employee Hours
+        employee_hours_cols = {
+            'Internal Quantity': None,
+            'Report Code Description': None,
+            'Project Description': None,
+            'Project Activity Sequence': None,
+            'Employee Description': None
+        }
+        
+        # Find matching columns
+        for req_col in employee_hours_cols:
+            if req_col == 'Project Activity Sequence':
+                match = find_column_match(pt_data, 'Activity Seq')
+            else:
+                match = find_column_match(pt_data, req_col)
+            if match:
+                employee_hours_cols[req_col] = match
+                print(f"Matched '{req_col}' to '{match}' in PT data")
+            else:
+                print(f"Warning: No match found for '{req_col}' in PT data")
+        
+        # Merge with AE data to get Project Description if not in PT data
+        employee_hours = pd.DataFrame()
+        if employee_hours_cols['Project Description'] is None and not ae_data.empty:
+            project_desc_col = find_column_match(ae_data, 'Project Description')
+            activity_seq_col_ae = find_column_match(ae_data, 'Activity Seq')
+            activity_seq_col_pt = find_column_match(pt_data, 'Activity Seq')
+            if project_desc_col and activity_seq_col_ae and activity_seq_col_pt:
+                temp_merge = pd.merge(
+                    pt_data[[activity_seq_col_pt]],
+                    ae_data[[activity_seq_col_ae, project_desc_col]],
+                    left_on=activity_seq_col_pt,
+                    right_on=activity_seq_col_ae,
+                    how='left'
+                )
+                employee_hours['Project Description'] = temp_merge[project_desc_col]
+                employee_hours_cols['Project Description'] = 'Project Description'
+        
+        # Add matched columns to employee_hours
+        for req_col, actual_col in employee_hours_cols.items():
+            if actual_col and req_col != 'Project Description':
+                employee_hours[req_col] = pt_data[actual_col]
+            elif req_col != 'Project Description':
+                employee_hours[req_col] = pd.NA
+        
+        # Rename Project Activity Sequence
+        if employee_hours_cols['Project Activity Sequence']:
+            employee_hours.rename(columns={'Project Activity Sequence': 'Project Activity Sequence'}, inplace=True)
+        
+        print(f"Created Employee Hours DataFrame with {len(employee_hours)} records")
+    except Exception as e:
+        print(f"Error creating Employee Hours DataFrame: {e}")
+        employee_hours = pd.DataFrame()
+else:
+    print("No PT data available for Employee Hours.")
+    employee_hours = pd.DataFrame()
+
 # Write the final report to Excel if data is available
-if not final_report.empty:
+if not final_report.empty or not employee_hours.empty:
     output_file = os.path.join(folder_path, "reportX.xlsx")
     
-    # Swap Estimated Revenue and Estimated Cost columns order
-    cols = list(final_report.columns)
-    if 'Estimated Revenue' in cols and 'Estimated Cost' in cols:
-        rev_idx = cols.index('Estimated Revenue')
-        cost_idx = cols.index('Estimated Cost')
-        cols[rev_idx], cols[cost_idx] = cols[cost_idx], cols[rev_idx]
-        final_report = final_report[cols]
-    
-    # Sort the report by Project and Budget Remaining (from smallest to largest)
-    if 'Project' in final_report.columns and 'Budget Remaining' in final_report.columns:
-        final_report.sort_values(['Project', 'Budget Remaining'], inplace=True)
-    elif 'Activity Seq' in final_report.columns:
-        final_report.sort_values('Activity Seq', inplace=True)
+    # Swap Estimated Revenue and Estimated Cost columns order in final_report
+    if not final_report.empty:
+        cols = list(final_report.columns)
+        if 'Estimated Revenue' in cols and 'Estimated Cost' in cols:
+            rev_idx = cols.index('Estimated Revenue')
+            cost_idx = cols.index('Estimated Cost')
+            cols[rev_idx], cols[cost_idx] = cols[cost_idx], cols[rev_idx]
+            final_report = final_report[cols]
+        
+        # Sort the report by Project and Budget Remaining (from smallest to largest)
+        if 'Project' in final_report.columns and 'Budget Remaining' in final_report.columns:
+            final_report.sort_values(['Project', 'Budget Remaining'], inplace=True)
+        elif 'Activity Seq' in final_report.columns:
+            final_report.sort_values('Activity Seq', inplace=True)
     
     # Create a Pandas Excel writer
     with pd.ExcelWriter(output_file, engine='openpyxl') as writer:
         # Write the main report to the first sheet
-        final_report.to_excel(writer, sheet_name='Activity Report', index=False)
+        if not final_report.empty:
+            final_report.to_excel(writer, sheet_name='Activity Report', index=False)
         
         # Create separate tabs for each manager's projects
-        if 'Manager Description' in final_report.columns:
-            managers = final_report['Manager Description'].unique()
-            print(f"Creating separate tabs for {len(managers)} managers")
-            
-            for manager in managers:
-                if pd.isna(manager) or manager == 'Unknown Manager':
-                    sheet_name = 'Unknown Manager'
-                else:
-                    # Clean the manager name for a valid sheet name (max 31 chars, no special chars)
-                    sheet_name = str(manager)[:30].replace('/', '_').replace('\\', '_').replace('?', '_').replace('*', '_').replace('[', '_').replace(']', '_').replace(':', '_')
+        if not final_report.empty and 'Manager Description' in final_report.columns:
+            # Get unique, non-null manager descriptions
+            managers = [m for m in final_report['Manager Description'].unique() if pd.notna(m) and m != '']
+            if not managers:
+                print("No valid manager descriptions found for separate tabs")
+            else:
+                print(f"Creating separate tabs for {len(managers)} managers")
                 
-                # Filter data for this manager
-                manager_data = final_report[final_report['Manager Description'] == manager]
+                # Track used sheet names to avoid duplicates
+                used_sheet_names = set(['Activity Report', 'Employee Hours'])
                 
-                if not manager_data.empty:
-                    # Write to a new sheet
-                    manager_data.to_excel(writer, sheet_name=sheet_name, index=False)
-                    print(f"  - Added tab for manager: {manager} with {len(manager_data)} projects")
+                for manager in managers:
+                    # Sanitize manager name for Excel sheet name (max 31 chars, no invalid chars)
+                    base_name = str(manager)[:28].strip()
+                    if not base_name:
+                        base_name = 'Unknown_Manager'
+                    base_name = base_name.replace('/', '_').replace('\\', '_').replace('?', '_').replace('*', '_').replace('[', '_').replace(']', '_').replace(':', '_')
+                    
+                    # Ensure unique sheet name
+                    sheet_name = base_name
+                    counter = 1
+                    while sheet_name in used_sheet_names:
+                        sheet_name = f"{base_name[:26]}_{counter}"
+                        counter += 1
+                    used_sheet_names.add(sheet_name)
+                    
+                    # Filter projects for this manager
+                    manager_data = final_report[final_report['Manager Description'] == manager]
+                    
+                    if not manager_data.empty:
+                        # Write manager's projects to their named tab
+                        manager_data.to_excel(writer, sheet_name=sheet_name, index=False)
+                        # Log the projects included
+                        project_list = manager_data['Project'].unique().tolist()
+                        print(f"  - Created tab '{sheet_name}' for manager '{manager}' with {len(manager_data)} records across {len(project_list)} projects: {project_list}")
+                    else:
+                        print(f"  - Skipped tab for manager '{manager}' (no projects found)")
+        
+        # Write Employee Hours to a new sheet
+        if not employee_hours.empty:
+            employee_hours.to_excel(writer, sheet_name='Employee Hours', index=False)
+            print(f"Added Employee Hours tab with {len(employee_hours)} records")
         
         # Apply formatting
         try:
             workbook = writer.book
             
             # Function to apply formatting to a worksheet
-            def apply_formatting_to_worksheet(worksheet, data):
+            def apply_formatting_to_worksheet(worksheet, data, include_databar=True):
                 # Style the header row
                 header_font = Font(bold=True, color='FFFFFF')
                 header_fill = PatternFill(start_color='4F81BD', end_color='4F81BD', fill_type='solid')
@@ -379,12 +463,12 @@ if not final_report.empty:
                         column_letter = chr(65 + i) if i < 26 else chr(64 + i//26) + chr(65 + i%26)
                         cell = worksheet[f"{column_letter}{row}"]
                         
-                        # Apply currency format to cost/revenue columns
-                        if col in ['Estimated Cost', 'Estimated Revenue', 'Actual Cost', 'Budget Remaining']:
+                        # Apply currency format to relevant columns
+                        if col in ['Estimated Cost', 'Estimated Revenue', 'Actual Cost', 'Budget Remaining', 'Internal Quantity']:
                             cell.number_format = '$#,##0.00'
                 
-                # Apply conditional formatting to Budget Remaining column if it exists
-                if 'Budget Remaining' in data.columns and 'Project' in data.columns:
+                # Apply conditional formatting to Budget Remaining column if it exists and requested
+                if include_databar and 'Budget Remaining' in data.columns and 'Project' in data.columns:
                     from openpyxl.formatting.rule import DataBar, FormatObject, Rule
                     
                     # Find the Budget Remaining column index
@@ -399,7 +483,6 @@ if not final_report.empty:
                     current_project = None
                     start_row = 2  # Excel starts at row 1, row 2 is first data row after header
                     
-                    # This worksheet data starts at index 1 (row 2 in Excel)
                     for i, row in enumerate(worksheet.iter_rows(min_row=2, max_row=len(data)+1, min_col=project_idx+1, max_col=project_idx+1), start=2):
                         project_value = row[0].value
                         
@@ -427,27 +510,39 @@ if not final_report.empty:
                             maxLength=100
                         )
                         
-                        # Apply the conditional formatting to just this project's rows in the Budget Remaining column
+                        # Apply the conditional formatting to just this project's rows
                         rule = Rule(type='dataBar', dataBar=green_databar)
                         cell_range = f"{br_col_letter}{start_row}:{br_col_letter}{end_row}"
                         worksheet.conditional_formatting.add(cell_range, rule)
             
             # Apply formatting to main worksheet
-            main_worksheet = writer.sheets['Activity Report']
-            apply_formatting_to_worksheet(main_worksheet, final_report)
+            if not final_report.empty:
+                main_worksheet = writer.sheets['Activity Report']
+                apply_formatting_to_worksheet(main_worksheet, final_report, include_databar=True)
             
             # Apply formatting to each manager's worksheet
-            if 'Manager Description' in final_report.columns:
+            if not final_report.empty and 'Manager Description' in final_report.columns:
                 for manager in managers:
-                    if pd.isna(manager) or manager == 'Unknown Manager':
-                        sheet_name = 'Unknown Manager'
-                    else:
-                        sheet_name = str(manager)[:30].replace('/', '_').replace('\\', '_').replace('?', '_').replace('*', '_').replace('[', '_').replace(']', '_').replace(':', '_')
+                    # Use the cleaned sheet name
+                    base_name = str(manager)[:28].strip()
+                    if not base_name:
+                        base_name = 'Unknown_Manager'
+                    base_name = base_name.replace('/', '_').replace('\\', '_').replace('?', '_').replace('*', '_').replace('[', '_').replace(']', '_').replace(':', '_')
+                    sheet_name = base_name
+                    counter = 1
+                    while sheet_name in used_sheet_names:
+                        sheet_name = f"{base_name[:26]}_{counter}"
+                        counter += 1
                     
                     if sheet_name in writer.sheets:
                         manager_data = final_report[final_report['Manager Description'] == manager]
                         manager_worksheet = writer.sheets[sheet_name]
-                        apply_formatting_to_worksheet(manager_worksheet, manager_data)
+                        apply_formatting_to_worksheet(manager_worksheet, manager_data, include_databar=True)
+            
+            # Apply formatting to Employee Hours worksheet
+            if not employee_hours.empty:
+                employee_worksheet = writer.sheets['Employee Hours']
+                apply_formatting_to_worksheet(employee_worksheet, employee_hours, include_databar=False)
         
         except Exception as e:
             print(f"Warning: Could not apply formatting to Excel file: {e}")
@@ -459,3 +554,4 @@ else:
     print("No data to write to the report.")
 
 print("Process completed.")
+```
